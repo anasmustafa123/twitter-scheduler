@@ -24,9 +24,9 @@ if 'access_secret' not in st.session_state:
 if 'bearer_key' not in st.session_state:
     st.session_state['bearer_key'] = r"AAAAAAAAAAAAAAAAAAAAAAX2xwEAAAAAh4PoQtZKc2n9%2FS3yXxN8RTTPVyQ%3DPXcivYLSg7u8E711xGeL40XIq8fJFagHg5R5J7Bak24834x48U"
 if 'schedule_day' not in st.session_state:
-    st.session_state['schedule_day'] = ""  # Default as datetime.date
+    st.session_state['schedule_day'] = date(2025, 1, 3)  # Default as datetime.date
 if 'schedule_hour' not in st.session_state:
-    st.session_state['schedule_hour'] = ""  # Default as datetime.time
+    st.session_state['schedule_hour'] = time(4, 10)  # Default as datetime.time
 
 # Input fields
 tweet_link = st.text_input("Twitter Post Link", value=st.session_state['tweet_link'], key="tweet_link")
