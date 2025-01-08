@@ -60,7 +60,7 @@ def schedule_post():
         table = boto3.resource("dynamodb",region_name='us-east-1').Table("schedule_tweet")
         response = dynamodb_insert(f"{schedule_day_str}{schedule_hour_str}", tweet_link, hashtags, schedule_day_str, schedule_hour_str, table)
     
-        st.success(f"Tweet with link {tweet_link} scheduled successfully! on {schedule_day}{schedule_hour}  ---> {response}")
+        st.success(f"Tweet with link {tweet_link} scheduled successfully! on {schedule_day_str}{schedule_hour_str}  ---> {response}")
     except Exception as e:
         st.error(f"Error scheduling tweet: {e}")
 
