@@ -1,12 +1,23 @@
 import streamlit as st
 from datetime import date, time
-#import tweepy
-#import boto3
-#from boto3.dynamodb.conditions import Attr, Key
-import requests
-import json
+import boto3
+from boto3.dynamodb.conditions import Attr, Key
 
 st.title("Twitter Post Scheduler")
+
+
+def dynamodb_insert(tweet_id, hashtags, tweet_media, tweet_text, tweet_schedule_day, tweet_schedule_hour, table):
+    response = table.put_item(
+    Item={
+        "tweet_id": tweet_id,
+        "tweet_text":tweet_text, 
+        "tweet_media":tweet_media, 
+        "hashtags":hashtags,
+        "tweet_schedule_date": f"{tweet_schedule_day} {tweet_schedule_hour}",
+    })
+    print(f"Insert response {response}")
+
+
 
 # Initialize session state for inputs
 if 'tweet_link' not in st.session_state:
@@ -48,26 +59,9 @@ def schedule_post():
         schedule_day_str = schedule_day.isoformat()
         schedule_hour_str = schedule_hour.isoformat()
         
-        payload = {
-                "body": {
-                    "tweet_link": "https://x.com/embersunn/status/1875598314663768282",
-                    "api_key": "t7tVUjfLsfrZyiURbeurCroTo",
-                    "api_secret_key": "r9adKisBC2L4BE8iK1puLMdc5zlgeLhtPbxaOcMQnneOiWWsne",
-                    "access_token": "711948595856015363-0OuQzTItXfuEI1gD2Vc6MxE34K29c48",
-                    "access_token_secret": "nPDqKN5fQ2GFZMf1cSPHS6GWvBqpfkuGgm2EADihoLoLi",
-                    "Bearer_key": "AAAAAAAAAAAAAAAAAAAAAKJVxwEAAAAAC%2FmLXuFwsFlKjGYM8qs7y5LlSAY%3Da3tSSEQjEwSYegby4nMWdD3gfALbyZ39IT1qG6uGCxovKeLG8C",
-                    "client_id": "c3FpcTdpU2NLTWhPUmFseDhvbWQ6MTpjaQ",
-                    "client_secret": "R9cGwVd_JPCYUWE6NQ2xNJp7GEwveTkT7NVk1szZBEbEz58Pak",
-                    "hashtags": "#new",
-                    "schedule_day": "2025-01-06",
-                    "schedule_hour": "22-20"
-                }
-            }
-        
-        shcedule_tweet_lambda = "https://0ay03k7zii.execute-api.us-east-1.amazonaws.com/default/shcedule_tweet"
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(shcedule_tweet_lambda, headers=headers, data=json.dumps(payload))
-        print({tweet_link, hashtags, api_key, api_secret, access_token, access_secret, bearer_key, schedule_day_str, schedule_hour_str})
+        table = boto3.resource("dynamodb",region_name='us-east-1').Table("schedule_tweet")
+        response = dynamodb_insert(f"{schedule_day}{schedule_hour}", tweet_link,hashtags, schedule_day_str, schedule_hour_str, table)
+    
         st.success(f"Tweet scheduled successfully! {response}")
     except Exception as e:
         st.error(f"Error scheduling tweet: {e}")
