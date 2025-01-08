@@ -6,17 +6,15 @@ from boto3.dynamodb.conditions import Attr, Key
 st.title("Twitter Post Scheduler")
 
 
-def dynamodb_insert(tweet_id, hashtags, tweet_media, tweet_text, tweet_schedule_day, tweet_schedule_hour, table):
+def dynamodb_insert(tweet_id, tweet_link, hashtags, tweet_schedule_day, tweet_schedule_hour, table):
     response = table.put_item(
     Item={
         "tweet_id": tweet_id,
-        "tweet_text":tweet_text, 
-        "tweet_media":tweet_media, 
+        "tweet_link":tweet_link, 
         "hashtags":hashtags,
         "tweet_schedule_date": f"{tweet_schedule_day} {tweet_schedule_hour}",
     })
     print(f"Insert response {response}")
-
 
 
 # Initialize session state for inputs
