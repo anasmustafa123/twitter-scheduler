@@ -1,3 +1,2 @@
-pillow==11.1.0
-requests==2.31.0
 streamlit==1.41.1
+boto3=1.35.94
