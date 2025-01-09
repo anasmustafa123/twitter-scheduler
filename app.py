@@ -2,6 +2,8 @@ import streamlit as st
 from datetime import date, time
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
+import requests
+import json 
 
 st.title("Twitter Post Scheduler")
 
@@ -56,11 +58,25 @@ def schedule_post():
         # Convert date and time to strings for storage
         schedule_day_str = schedule_day.isoformat()
         schedule_hour_str = schedule_hour.isoformat()
+
+        load = {
+            "body": {
+                "tweet_link": tweet_link, 
+                "hashtags": hashtags,
+               "schedule_day": schedule_day_str,
+                "schedule_hour": schedule_hour_str,
+                "api_key": api_key,
+                "api_secret": api_secret,
+                "access_token" : access_token,
+                "access_secret": access_secret,
+                "bearer_key": bearer_key
+            }
+        }
+        response = requests.post("https://4oz7lrgkd0.execute-api.us-east-1.amazonaws.com/default/load_to_dynamodb", headers={"Content-Type": "application/json"}, data=json.dumps(load))
+        #table = boto3.resource("dynamodb",region_name='us-east-1').Table("schedule_tweet")
+        #response = dynamodb_insert(f"{schedule_day_str}{schedule_hour_str}", tweet_link, hashtags, schedule_day_str, schedule_hour_str, table)
         
-        table = boto3.resource("dynamodb",region_name='us-east-1').Table("schedule_tweet")
-        response = dynamodb_insert(f"{schedule_day_str}{schedule_hour_str}", tweet_link, hashtags, schedule_day_str, schedule_hour_str, table)
-    
-        st.success(f"Tweet with link {tweet_link} scheduled successfully! on {schedule_day_str}{schedule_hour_str}  ---> {response}")
+        st.success(f"Tweet with link {tweet_link} scheduled successfully! on {schedule_day_str}{schedule_hour_str}  ---> {response.status_code}")
     except Exception as e:
         st.error(f"Error scheduling tweet: {e}")
 
