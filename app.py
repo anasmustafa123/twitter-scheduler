@@ -58,7 +58,7 @@ def schedule_post():
         # Convert date and time to strings for storage
         schedule_day_str = schedule_day.isoformat()
         schedule_hour_str = schedule_hour.isoformat()
-
+                
         load = {
             "body": {
                 "tweet_link": tweet_link, 
@@ -72,10 +72,7 @@ def schedule_post():
                 "bearer_key": bearer_key
             }
         }
-        response = requests.post("https://4oz7lrgkd0.execute-api.us-east-1.amazonaws.com/default/load_to_dynamodb", headers={"Content-Type": "application/json"}, data=json.dumps(load))
-        #table = boto3.resource("dynamodb",region_name='us-east-1').Table("schedule_tweet")
-        #response = dynamodb_insert(f"{schedule_day_str}{schedule_hour_str}", tweet_link, hashtags, schedule_day_str, schedule_hour_str, table)
-        
+        response = requests.post("https://zspemvvgs2.execute-api.us-east-1.amazonaws.com/default/schedule_tweet", headers={"Content-Type": "application/json"}, data=json.dumps(load))
         st.success(f"Tweet with link {tweet_link} scheduled successfully! on {schedule_day_str}{schedule_hour_str}  ---> {response.status_code}")
     except Exception as e:
         st.error(f"Error scheduling tweet: {e}")
