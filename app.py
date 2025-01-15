@@ -4,8 +4,67 @@ import boto3
 from boto3.dynamodb.conditions import Attr, Key
 import requests
 import json 
+import sqlite3
 
 st.title("Twitter Post Scheduler")
+
+
+# Initialize SQLite database
+def init_db():
+    conn = sqlite3.connect("credentials.db")
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            username TEXT UNIQUE,
+            api_key TEXT,
+            api_secret TEXT,
+            access_token TEXT,
+            access_secret TEXT,
+            bearer_key TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# Add new user to the database
+def add_user_to_db(username, api_key, api_secret, access_token, access_secret, bearer_key):
+    conn = sqlite3.connect("credentials.db")
+    c = conn.cursor()
+    try:
+        c.execute("""
+            INSERT INTO users (username, api_key, api_secret, access_token, access_secret, bearer_key)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (username, api_key, api_secret, access_token, access_secret, bearer_key))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        st.error("Username already exists!")
+    conn.close()
+
+# Fetch all users from the database
+def get_all_users():
+    conn = sqlite3.connect("credentials.db")
+    c = conn.cursor()
+    c.execute("SELECT username FROM users")
+    users = [row[0] for row in c.fetchall()]
+    conn.close()
+    return users
+
+# Fetch user credentials by username
+def get_user_credentials(username):
+    conn = sqlite3.connect("credentials.db")
+    c = conn.cursor()
+    c.execute("""
+        SELECT api_key, api_secret, access_token, access_secret, bearer_key
+        FROM users WHERE username = ?
+    """, (username,))
+    user = c.fetchone()
+    conn.close()
+    return user
+
+# Initialize database
+init_db()
+
 
 
 def dynamodb_insert(tweet_id, tweet_link, hashtags, tweet_schedule_day, tweet_schedule_hour, table):
@@ -17,6 +76,11 @@ def dynamodb_insert(tweet_id, tweet_link, hashtags, tweet_schedule_day, tweet_sc
         "tweet_schedule_date": f"{tweet_schedule_day} {tweet_schedule_hour}",
     })
     print(f"Insert response {response}")
+
+
+# Dropdown to select user
+users = get_all_users()
+selected_user = st.selectbox("Select User", [""] + users)
 
 
 # Initialize session state for inputs
@@ -39,6 +103,19 @@ if 'schedule_day' not in st.session_state:
 if 'schedule_hour' not in st.session_state:
     st.session_state['schedule_hour'] = time(4, 10)  # Default as datetime.time
 
+
+if selected_user:
+    user_credentials = get_user_credentials(selected_user)
+    print(f"user the user_credentials {user_credentials}")
+    if user_credentials:
+        st.session_state['api_key'] =  user_credentials[0]
+        st.session_state['api_secret']=  user_credentials[1]
+        st.session_state['access_token']=  user_credentials[2]
+        st.session_state['access_secret']=  user_credentials[3]
+        st.session_state['bearer_key'] =   user_credentials[4]
+        st.success(f"Loaded credentials for {selected_user}")
+
+
 # Input fields
 tweet_link = st.text_input("Twitter Post Link", value=st.session_state['tweet_link'], key="tweet_link")
 hashtags = st.text_area("Add Hashtags (comma-separated)", value=st.session_state['hashtags'], key="hashtags")
@@ -49,6 +126,10 @@ access_secret = st.text_input("Access Token Secret", type="password", value=st.s
 bearer_key = st.text_input("Bearer Key", type="password", value=st.session_state['bearer_key'], key="bearer_key")
 schedule_day = st.date_input("Schedule date", value=st.session_state['schedule_day'], key="schedule_day")
 schedule_hour = st.time_input("Schedule Time", value=st.session_state['schedule_hour'], key="schedule_hour")
+
+
+
+#-----------------------------------
 
 # Handle buttons
 col1, col2 = st.columns(2)
@@ -94,3 +175,25 @@ with col1:
 
 with col2:
     st.button("Clear", on_click=clear_states)
+
+
+#-----------------------------------
+
+
+# Add new user section
+st.subheader("Add New User")
+username = st.text_input("Username")
+new_api_key = st.text_input("New API Key")
+new_api_secret = st.text_input("New API Secret", type="password")
+new_access_token = st.text_input("New Access Token")
+new_access_secret = st.text_input("New Access Token Secret", type="password")
+new_bearer_key = st.text_input("New Bearer Key", type="password")
+
+
+
+if st.button("Add New User"):
+    if username and new_api_key and new_api_secret and new_access_token and new_access_secret and new_bearer_key:
+        add_user_to_db(username, new_api_key, new_api_secret, new_access_token, new_access_secret, new_bearer_key)
+        st.success(f"User {username} added successfully!")
+    else:
+        st.error("All fields are required to add a new user!")
